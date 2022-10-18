@@ -4,6 +4,7 @@ import (
 	"context"
 	"log"
 	"os"
+	"upvote/grpc/cmd/server/controller"
 
 	"github.com/joho/godotenv"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -33,5 +34,5 @@ func connection() {
 		log.Fatal(err)
 	}
 
-	Collection = client.Database("cryptodb").Collection("crypto")
+	controller.Collection = client.Database("cryptodb").Collection("crypto")
 }

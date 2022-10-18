@@ -4,10 +4,13 @@ import (
 	"log"
 	"net"
 	"upvote/grpc/proto/pb"
-
+	"upvote/grpc/cmd/server/controller"
+	
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
 )
+
+var cryptoController controller.CryptoServer = controller.NewCryptoController()
 
 func main() {
 	connection()
@@ -21,7 +24,7 @@ func main() {
 	log.Print("Server listening on localhost:50051")
 
 	s := grpc.NewServer()
-	pb.RegisterCryptoServiceServer(s, &Server{})
+	pb.RegisterCryptoServiceServer(s, &controller.CryptoServer{})
 
 	reflection.Register(s)
 
