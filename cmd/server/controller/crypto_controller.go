@@ -126,7 +126,46 @@ func (*CryptoServer) ListById(ctx context.Context, in *pb.CryptoId) (*pb.Crypto,
 }
 
 func (*CryptoServer) Update(ctx context.Context, in *pb.Crypto) (*emptypb.Empty, error) {
-	return nil, nil
+	log.Printf("UpdateCrypto was invoked with %v\n", in)
+
+	oid, err := primitive.ObjectIDFromHex(in.Id)
+
+	if err != nil {
+		return nil, status.Errorf(
+			codes.InvalidArgument,
+			"Cannot parse ID",
+		)
+	}
+
+	data := &CryptoItem{
+		CryptoName: in.CryptoName,
+	}
+
+	log.Print(data)
+
+	res, err := Collection.UpdateOne(
+		ctx,
+		bson.M{"_id": oid},
+		bson.M{"$set": data},
+	)
+
+	log.Print(res)
+
+	if err != nil {
+		return nil, status.Errorf(
+			codes.Internal,
+			"Could not update",
+		)
+	}
+
+	if res.MatchedCount == 0 {
+		return nil, status.Errorf(
+			codes.NotFound,
+			"Cannot find crypto with ID",
+		)
+	}
+
+	return &emptypb.Empty{}, nil
 }
 
 func (*CryptoServer) Delete(ctx context.Context, in *pb.CryptoId) (*emptypb.Empty, error) {
