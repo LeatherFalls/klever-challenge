@@ -169,7 +169,32 @@ func (*CryptoServer) Update(ctx context.Context, in *pb.Crypto) (*emptypb.Empty,
 }
 
 func (*CryptoServer) Delete(ctx context.Context, in *pb.CryptoId) (*emptypb.Empty, error) {
-	return nil, nil
+	oid, err := primitive.ObjectIDFromHex(in.Id)
+
+	if err != nil {
+		return nil, status.Errorf(
+			codes.InvalidArgument,
+			"Cannot parse OID",
+		)
+	}
+
+	res, err := Collection.DeleteOne(ctx, bson.M{ "_id": oid })
+
+	if err != nil {
+		return nil, status.Errorf(
+			codes.Internal,
+			fmt.Sprintf("Cannot delete object: %v", err),
+		)
+	}
+
+	if res.DeletedCount == 0 {
+		return nil, status.Errorf(
+			codes.NotFound,
+			"Crypto not found",
+		)
+	}
+
+	return &emptypb.Empty{}, nil
 }
 
 func (*CryptoServer) UpvoteCrypto(ctx context.Context, in *pb.CryptoId) (*emptypb.Empty, error) {
