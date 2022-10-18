@@ -1,0 +1,26 @@
+syntax = "proto3";
+
+package proto;
+
+option go_package = "./proto/pb";
+
+import "google/protobuf/empty.proto";
+
+message Crypto {
+  string id = 1;
+  string crypto_name = 2;
+  int32 crypto_likes = 3;
+}
+
+message CryptoId {
+  string id = 1;
+}
+
+service CryptoService {
+  rpc Create(Crypto) returns (CryptoId);
+  rpc ListAll(google.protobuf.Empty) returns (stream Crypto);
+  rpc ListById(CryptoId) returns (Crypto);
+  rpc Update(Crypto) returns (google.protobuf.Empty);
+  rpc Delete(CryptoId) returns (google.protobuf.Empty);
+  rpc UpvoteCrypto(CryptoId) returns (google.protobuf.Empty);
+}
