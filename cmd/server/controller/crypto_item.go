@@ -16,6 +16,6 @@ func DocumentToCrypto(data *CryptoItem) *pb.Crypto {
 	return &pb.Crypto{
 		Id:          data.ID.Hex(),
 		CryptoName:  data.CryptoName,
-		CryptoLikes: 0,
+		CryptoLikes: data.CryptoLikes,
 	}
 }

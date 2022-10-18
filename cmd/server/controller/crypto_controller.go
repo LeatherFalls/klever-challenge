@@ -6,6 +6,7 @@ import (
 	"log"
 	"upvote/grpc/proto/pb"
 
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -52,11 +53,76 @@ func (*CryptoServer) Create(ctx context.Context, in *pb.Crypto) (*pb.CryptoId, e
 }
 
 func (s *CryptoServer) ListAll(_ *emptypb.Empty, stream pb.CryptoService_ListAllServer) error {
+	log.Println("ListAll was invoked")
+	
+	ctx := context.Background()
+
+	cur, err := Collection.Find(ctx, primitive.D{{}})
+
+	if err != nil {
+		return status.Errorf(
+			codes.Internal,
+			fmt.Sprintf("Internal server error: %v", err),
+		)
+	}
+
+	defer cur.Close(ctx)
+
+	for cur.Next(ctx) {
+		data := &CryptoItem{}
+		
+		err := cur.Decode(data)
+		
+		if err != nil {
+			return status.Errorf(
+				codes.Internal,
+				fmt.Sprintf("Error while decoding data from MongoDB: %v", err),
+			)
+		}
+		
+		stream.Send(DocumentToCrypto(data))
+	}
+	
+	if err = cur.Err(); err != nil {
+		return status.Errorf(
+			codes.Internal,
+			fmt.Sprintf("Unknown internal error: %v", err),
+		)
+	}
+	
 	return nil
 }
 
 func (*CryptoServer) ListById(ctx context.Context, in *pb.CryptoId) (*pb.Crypto, error) {
-	return nil, nil
+	log.Printf("ListById was invoked with %v\n", in)
+
+	oid, err := primitive.ObjectIDFromHex(in.Id)
+
+	if err != nil {
+		return nil, status.Errorf(
+			codes.InvalidArgument,
+			"Cannot parse ID",
+		)
+	}
+
+	data := &CryptoItem{}
+
+	log.Print(data)
+	
+	filter := bson.M{"_id": oid}
+
+	res := Collection.FindOne(ctx, filter)
+
+	log.Print(res)
+
+	if err := res.Decode(data); err != nil {
+		return nil, status.Errorf(
+			codes.NotFound,
+			fmt.Sprintf("Cannot find crypto with specified ID: %v", err),
+		)
+	}
+
+	return DocumentToCrypto(data), nil
 }
 
 func (*CryptoServer) Update(ctx context.Context, in *pb.Crypto) (*emptypb.Empty, error) {
