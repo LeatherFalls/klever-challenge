@@ -2,8 +2,11 @@ package main
 
 import (
 	"context"
+	"io"
 	"log"
 	"upvote/grpc/proto/pb"
+
+	"google.golang.org/protobuf/types/known/emptypb"
 )
 
 func create(client pb.CryptoServiceClient) string {
@@ -25,7 +28,27 @@ func create(client pb.CryptoServiceClient) string {
 }
 
 func listAll(client pb.CryptoServiceClient) {
-	
+	log.Printf("Listing all crypto...")
+
+	list, err := client.ListAll(context.Background(), &emptypb.Empty{})
+
+	if err != nil {
+		log.Fatalf("Error while reading crypto: %v", err)
+	}
+
+	for {
+		response, err := list.Recv()
+
+		if err == io.EOF {
+			break
+		}
+
+		if err != nil {
+			log.Fatalf("Error while reading stream: %v", err)
+		}
+
+		log.Printf("Crypto: %v", response)
+	}
 }
 
 func listById(client pb.CryptoServiceClient, id string) *pb.Crypto {
