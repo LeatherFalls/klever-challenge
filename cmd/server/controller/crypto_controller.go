@@ -198,5 +198,40 @@ func (*CryptoServer) Delete(ctx context.Context, in *pb.CryptoId) (*emptypb.Empt
 }
 
 func (*CryptoServer) UpvoteCrypto(ctx context.Context, in *pb.CryptoId) (*emptypb.Empty, error) {
-	return nil, nil
+	log.Printf("UpvoteCrypto was invoked with %v\n", in)
+
+	oid, err := primitive.ObjectIDFromHex(in.Id)
+
+	log.Print(oid)
+
+	if err != nil {
+		return nil, status.Errorf(
+			codes.InvalidArgument,
+			"Cannot parse ID",
+		)
+	}
+
+	res, err := Collection.UpdateOne(
+		ctx,
+		bson.M{"_id": oid},
+		bson.M{"$inc": bson.M{"crypto_likes": 1}},
+	)
+
+	log.Print(res)
+
+	if res.MatchedCount == 0 {
+		return nil, status.Errorf(
+			codes.NotFound,
+			"Cannot find crypto with ID",
+		)
+	}
+
+	if err != nil {
+		return nil, status.Errorf(
+			codes.Internal,
+			fmt.Sprintf("Something went wrong: %v\n", err),
+		)
+	}
+
+	return &emptypb.Empty{}, nil
 }
