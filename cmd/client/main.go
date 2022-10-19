@@ -25,6 +25,6 @@ func main() {
 	listAll(client)
 	listById(client, id)
 	update(client, id)
-	delete(client, id)
 	upvoteCrypto(client, id)
+	delete(client, id)
 }

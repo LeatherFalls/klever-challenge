@@ -80,18 +80,6 @@ func update(client pb.CryptoServiceClient, id string) {
 		log.Println("Crypto was updated!")
 }
 
-func delete(client pb.CryptoServiceClient, id string) {
-	log.Printf("Deleting crypto with id: %s", id)
-
-	res, err := client.Delete(context.Background(), &pb.CryptoId{Id: id})
-
-	if err != nil {
-		log.Fatalf("Error while deleting crypto: %v", err)
-	}
-
-	log.Printf("Crypto deleted: %v", res.String())
-}
-
 func upvoteCrypto(client pb.CryptoServiceClient, id string) {
 	log.Printf("Upvoting crypto with id: %s", id)
 
@@ -102,4 +90,16 @@ func upvoteCrypto(client pb.CryptoServiceClient, id string) {
 	}
 
 	log.Printf("Crypto upvoted: %v", res.String())
+}
+
+func delete(client pb.CryptoServiceClient, id string) {
+	log.Printf("Deleting crypto with id: %s", id)
+
+	res, err := client.Delete(context.Background(), &pb.CryptoId{Id: id})
+
+	if err != nil {
+		log.Fatalf("Error while deleting crypto: %v", err)
+	}
+
+	log.Printf("Crypto deleted: %v", res.String())
 }
