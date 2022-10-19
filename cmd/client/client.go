@@ -52,7 +52,15 @@ func listAll(client pb.CryptoServiceClient) {
 }
 
 func listById(client pb.CryptoServiceClient, id string) *pb.Crypto {
-	return nil
+	res, err := client.ListById(context.Background(), &pb.CryptoId{Id: id})
+
+	if err != nil {
+		log.Fatalf("Error while reading crypto: %v", err)
+	}
+
+	log.Printf("Reading crypto with id: %s", id)
+
+	return res
 }
 
 func update(client pb.CryptoServiceClient, id string) {
