@@ -64,7 +64,20 @@ func listById(client pb.CryptoServiceClient, id string) *pb.Crypto {
 }
 
 func update(client pb.CryptoServiceClient, id string) {
-	
+	log.Printf("Updating crypto with id: %s", id)
+
+		crypto := &pb.Crypto{
+			Id:      id,
+			CryptoName: "KLV is the best crypto",
+		}
+
+		_, err := client.Update(context.Background(), crypto)
+
+		if err != nil {
+			log.Fatalf("Error while updating crypto: %v", err)
+		}
+
+		log.Println("Crypto was updated!")
 }
 
 func delete(client pb.CryptoServiceClient, id string) {
