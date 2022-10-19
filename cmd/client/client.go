@@ -93,5 +93,13 @@ func delete(client pb.CryptoServiceClient, id string) {
 }
 
 func upvoteCrypto(client pb.CryptoServiceClient, id string) {
+	log.Printf("Upvoting crypto with id: %s", id)
 
+	res, err := client.UpvoteCrypto(context.Background(), &pb.CryptoId{Id: id})
+
+	if err != nil {
+		log.Fatalf("Error while upvoting crypto: %v", err)
+	}
+
+	log.Printf("Crypto upvoted: %v", res.String())
 }
