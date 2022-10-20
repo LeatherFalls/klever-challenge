@@ -21,7 +21,7 @@ func NewCryptoController() CryptoServer {
 	return CryptoServer{}
 }
 
-func (*CryptoServer) Create(ctx context.Context, in *pb.Crypto) (*pb.CryptoId, error) {
+func (c *CryptoServer) Create(ctx context.Context, in *pb.Crypto) (*pb.CryptoId, error) {
 	log.Printf("CreateCrypto was invoked with %v\n", in)
 
 	data := CryptoItem{
