@@ -106,14 +106,10 @@ func (*CryptoServer) ListById(ctx context.Context, in *pb.CryptoId) (*pb.Crypto,
 	}
 
 	data := &CryptoItem{}
-
-	log.Print(data)
 	
 	filter := bson.M{"_id": oid}
 
 	res := Collection.FindOne(ctx, filter)
-
-	log.Print(res)
 
 	if err := res.Decode(data); err != nil {
 		return nil, status.Errorf(
@@ -141,15 +137,11 @@ func (*CryptoServer) Update(ctx context.Context, in *pb.Crypto) (*emptypb.Empty,
 		CryptoName: in.CryptoName,
 	}
 
-	log.Print(data)
-
 	res, err := Collection.UpdateOne(
 		ctx,
 		bson.M{"_id": oid},
 		bson.M{"$set": data},
 	)
-
-	log.Print(res)
 
 	if err != nil {
 		return nil, status.Errorf(
@@ -202,8 +194,6 @@ func (*CryptoServer) UpvoteCrypto(ctx context.Context, in *pb.CryptoId) (*emptyp
 
 	oid, err := primitive.ObjectIDFromHex(in.Id)
 
-	log.Print(oid)
-
 	if err != nil {
 		return nil, status.Errorf(
 			codes.InvalidArgument,
@@ -216,8 +206,6 @@ func (*CryptoServer) UpvoteCrypto(ctx context.Context, in *pb.CryptoId) (*emptyp
 		bson.M{"_id": oid},
 		bson.M{"$inc": bson.M{"crypto_likes": 1}},
 	)
-
-	log.Print(res)
 
 	if res.MatchedCount == 0 {
 		return nil, status.Errorf(
