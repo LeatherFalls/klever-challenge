@@ -12,16 +12,18 @@ import (
 
 var cryptoController controller.CryptoServer = controller.NewCryptoController()
 
+var addr = "localhost:50051"
+
 func main() {
 	connection()
 
-	lis, err := net.Listen("tcp", "localhost:50051")
+	lis, err := net.Listen("tcp", addr)
 
 	if err != nil {
 		log.Fatalf("Failed to listen: %v\n", err)
 	}
 
-	log.Print("Server listening on localhost:50051")
+	log.Printf("Server listening on %v", addr)
 
 	s := grpc.NewServer()
 	pb.RegisterCryptoServiceServer(s, &controller.CryptoServer{})
