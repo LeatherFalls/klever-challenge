@@ -13,7 +13,7 @@ func create(client pb.CryptoServiceClient) string {
 	log.Printf("Creating a new crypto...")
 
 	crypto := &pb.Crypto{
-		CryptoName: "KLV",
+		CryptoName: "CLIENT",
 	}
 
 	res, err := client.Create(context.Background(), crypto)

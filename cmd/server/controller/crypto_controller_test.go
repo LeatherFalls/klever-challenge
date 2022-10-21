@@ -2,115 +2,167 @@ package controller
 
 import (
 	"context"
-	"reflect"
+	"log"
 	"testing"
 	"upvote/grpc/proto/pb"
+
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-/* var cryptoServiceClient pb.CryptoServiceClient */
-
-/* func init() {
+func init() {
 	go StartServer()
 }
 
-func connectServer() (*grpc.ClientConn, context.CancelFunc) {
-	conn, err := grpc.Dial("localhost:50051", grpc.WithTransportCredentials(insecure.NewCredentials()))
+func connection() {
+	uri := "mongodb+srv://root:nsyPGGrHvSzklZCC@cluster0.y9tu6ly.mongodb.net/?retryWrites=true&w=majority"
+
+	client, err := mongo.NewClient(options.Client().ApplyURI(uri))
 
 	if err != nil {
-		log.Fatalf("Error to connect to server: %v", err)
+		log.Fatal(err)
 	}
 
-	client := pb.NewCryptoServiceClient(conn)
-	_, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	err = client.Connect(context.Background())
 
-	cryptoServiceClient = client
+	if err != nil {
+		log.Fatal(err)
+	}
 
-	return conn, cancel
+	Collection = client.Database("cryptodb").Collection("crypto")
 }
 
 func TestCreate(t *testing.T) {
-	conn, cancel := connectServer()
-	defer conn.Close()
-	defer cancel()
+	s := CryptoServiceServer{}
+	connection()
 
-	req := &pb.Crypto{
-		Id:          "634f6df1f56fbac87d062fbe",
+	crypto := &pb.Crypto{
 		CryptoName:  "Bitcoin",
-		CryptoLikes: 1,
+		CryptoLikes: 100,
 	}
 
-	res, err := cryptoServiceClient.Create(context.Background(), req)
+	res, err := s.CreateCrypto(context.Background(), crypto)
 
 	if err != nil {
 		t.Errorf("Error while creating crypto: %v", err)
 	}
 
-	if res.Id != req.Id {
-		t.Errorf("Error while creating crypto: %v", err)
-	}
-} */
+	crypto.Id = res.Id
 
-func TestCryptoServer_Create(t *testing.T) {
-	type fields struct {
-		CryptoServiceServer pb.CryptoServiceServer
+	log.Print(res.Id)
+	log.Print(crypto.Id)
+
+	if res.Id != crypto.Id {
+		t.Errorf("Invalid response from server: %v", res)
 	}
-	type args struct {
-		ctx context.Context
-		in  *pb.Crypto
+
+	if res.Id == crypto.Id {
+		log.Print("Crypto created successfully")
 	}
-	tests := []struct {
-		name    string
-		fields  fields
-		args    args
-		want    *pb.CryptoId
-		wantErr bool
-	}{
-		{
-			name: "Create sucess",
-			fields: fields{
-				CryptoServiceServer: &CryptoServer{},
-			},
-			args: args{
-				ctx: context.Background(),
-				in: &pb.Crypto{
-					Id:          "634f6df1f56fbac87d062fbe",
-					CryptoName:  "Bitcoin",
-					CryptoLikes: 1,
-				},
-			},
-			want: &pb.CryptoId{
-				Id: "634f6df1f56fbac87d062fbe",
-			},
-			wantErr: false,
-		},
-/* 		{
-			name: "Create error",
-			fields: fields{
-				CryptoServiceServer: &CryptoServer{},
-			},
-			args: args{
-				ctx: context.Background(),
-				in: &pb.Crypto{
-					Id:          "634f6df1f56fbac87d062fbe",
-					CryptoName:  "Bitcoin",
-					CryptoLikes: 1,
-				},
-			},
-			want: 	nil,
-			wantErr: true,
-		}, */
+
+	defer Collection.Drop(context.Background())
+}
+
+func TestListById(t *testing.T) {
+	s := CryptoServiceServer{}
+	connection()
+
+	request := &pb.CryptoId{
+		Id: "634f6df1f56fbac87d062fbe",
 	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			c := NewCryptoController()
-			got, err := c.Create(tt.args.ctx, tt.args.in)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("CryptoServer.Create() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("CryptoServer.Create() = %v, want %v", got, tt.want)
-			}
-		})
+
+	res, err := s.ListCryptoById(context.Background(), request)
+
+	if err != nil {
+		t.Errorf("Error while listing crypto by id: %v", err)
 	}
+
+	if res.Id != request.Id {
+		t.Errorf("Invalid response from server: %v", res)
+	}
+}
+
+func TestUpdate(t *testing.T) {
+	s := CryptoServiceServer{}
+	connection()
+
+	request := &pb.Crypto{
+		Id:          "634f6df1f56fbac87d062fbe",
+		CryptoName:  "Bitcoin",
+		CryptoLikes: 100,
+	}
+
+	res, err := s.UpdateCrypto(context.Background(), request)
+
+	if res.CryptoName == request.CryptoName {
+		t.Errorf("CryptoName must to be updated: %v", err)
+	}
+
+	if err != nil {
+		t.Errorf("Error while updating crypto: %v", err)
+	}
+
+	defer Collection.Drop(context.Background())
+}
+
+func TestDelete(t *testing.T) {
+	s := CryptoServiceServer{}
+	connection()
+	defer Collection.Drop(context.Background())
+
+	request := &pb.CryptoId{
+		Id: "634f6df1f56fbac87d062fbe",
+	}
+
+	res, err := s.DeleteCrypto(context.Background(), request)
+
+	if res.Id == "" {
+		log.Print("Crypto deleted")
+	}
+
+	if err != nil {
+		t.Errorf("Error while deleting crypto: %v", err)
+	}
+}
+
+func TestUpvoteCrypto(t *testing.T) {
+	s := CryptoServiceServer{}
+	connection()
+
+	c := &pb.Crypto{
+		CryptoName:  "Bitcoin",
+		CryptoLikes: 100,
+	}
+
+	test, _ := s.CreateCrypto(context.Background(), c)
+
+	oid, _ := primitive.ObjectIDFromHex(test.Id)
+
+	Collection.UpdateOne(
+		context.Background(),
+		bson.M{"_id": oid},
+		bson.M{"$inc": bson.M{"cryptolikes": 1}},
+	)
+
+	crypto, err := Collection.FindOne(context.Background(), bson.M{"_id": oid}).DecodeBytes()
+
+	e, _ := crypto.Elements()
+
+	cl := e[3].Value().Int32()
+
+	if cl != 101 {
+		t.Errorf("Error while upvoting crypto: %v", err)
+	}
+
+	if err != nil {
+		t.Errorf("Error while upvoting crypto: %v", err)
+	}
+
+	if cl == 101 {
+		log.Print("Crypto upvoted successfully")
+	}
+
+	defer Collection.Drop(context.Background())
 }
